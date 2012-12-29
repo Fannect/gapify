@@ -9,9 +9,9 @@ mod = module.exports = (program, done) ->
    originalDir = process.cwd()
 
    mod.changeWorkingDirectory(program.chdir)
-   outDir = path.join process.cwd(), program.output or config.output 
    config = mod.loadConfig()
-
+   outDir = path.join process.cwd(), program.output or config.output 
+   
    mod.createOutputDirectory(outDir, program.empty or false)
    mod.compileViews config.views, outDir
    mod.copyAssets config.assets, outDir, () ->
