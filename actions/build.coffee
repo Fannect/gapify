@@ -72,11 +72,13 @@ mod.copyAssets = (assets, outDir, done) ->
       asset.to = asset.to.replace("{out}", outDir)
       
       # Ensure directory exists
-      folder = if asset.is_directory then asset.to else path.dirname asset.to
+      stat = fs.statSync asset.from
+      folder = if stat and stat.isDirectory() then asset.to else path.dirname asset.to
       unless fs.existsSync folder then fs.mkdirsSync folder
 
       # Compile assets
-      compileFn = mod.compileAsset[asset.compile] or mod.compileAsset["none"]
+      ext = path.extname(asset.from).replace(".", "")
+      compileFn = mod.compileAsset[ext] or mod.compileAsset["none"]
       compileFn asset, (err) ->
          throw err if err
          if --counter <= 0 then done() if done
@@ -87,7 +89,7 @@ mod.compileAsset =
       snockets.getConcatenation asset.from, minify: true, (err, js) ->
          throw err if err
          fs.writeFile asset.to, js, done 
-   stylus: (asset, done) ->
+   styl: (asset, done) ->
       fs.readFile asset.from, (err, data) ->
          throw err if err
 

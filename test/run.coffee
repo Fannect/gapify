@@ -85,8 +85,6 @@ describe "gapify", () ->
                asset = 
                   from: "assets/test.html"
                   to: "{out}/text.html"
-                  compile: "none",
-                  is_directory: false
                build_action.copyAssets [asset], output, () ->
                   fs.existsSync(path.join(output, "text.html")).should.be.true
                   done()
@@ -95,8 +93,6 @@ describe "gapify", () ->
                asset = 
                   from: "assets/views/sub"
                   to: "{out}/sub"
-                  compile: "none",
-                  is_directory: true
                build_action.copyAssets [asset], output, () ->
                   fs.existsSync(path.join(output, "sub/deep.jade")).should.be.true
                   done()
@@ -106,7 +102,6 @@ describe "gapify", () ->
                asset =
                   from: "assets/test.coffee"
                   to: "{out}/test.js"
-                  compile: "coffee"
                build_action.copyAssets [asset], output, done
 
             it "should copy file to correct directory", () ->
@@ -120,7 +115,6 @@ describe "gapify", () ->
                asset = 
                   from: "assets/test.styl"
                   to: "{out}/test.css"
-                  compile: "stylus"
                build_action.copyAssets [asset], output, done
 
             it "should copy file to correct directory", () ->
