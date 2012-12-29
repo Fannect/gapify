@@ -85,7 +85,7 @@ describe "gapify", () ->
                asset = 
                   from: "assets/test.html"
                   to: "{out}/text.html"
-               build_action.copyAssets [asset], output, () ->
+               build_action.copyAssets [asset], false, output, () ->
                   fs.existsSync(path.join(output, "text.html")).should.be.true
                   done()
 
@@ -93,7 +93,7 @@ describe "gapify", () ->
                asset = 
                   from: "assets/views/sub"
                   to: "{out}/sub"
-               build_action.copyAssets [asset], output, () ->
+               build_action.copyAssets [asset], false, output, () ->
                   fs.existsSync(path.join(output, "sub/deep.jade")).should.be.true
                   done()
 
@@ -102,20 +102,28 @@ describe "gapify", () ->
                asset =
                   from: "assets/test.coffee"
                   to: "{out}/test.js"
-               build_action.copyAssets [asset], output, done
+               build_action.copyAssets [asset], false, output, done
 
             it "should copy file to correct directory", () ->
                fs.existsSync(path.join(output, "test.js")).should.be.true
 
-            it "should compile imported files and minify", () ->
+            it "should compile files and minify", () ->
                checkAgainstFile path.join(output, "test.js"), path.join(process.cwd(), "assets/test.js")
+
+            it "should compile and not minify if set to debugging", (done) ->
+               asset = 
+                  from: "assets/test.coffee"
+                  to: "{out}/test.js"
+               build_action.copyAssets [asset], true, output, () ->
+                  checkAgainstFile path.join(output, "test.js"), path.join(process.cwd(), "assets/test-debug.js")
+                  done()
 
          describe "with compile 'stylus'", () ->
             before (done) ->
                asset = 
                   from: "assets/test.styl"
                   to: "{out}/test.css"
-               build_action.copyAssets [asset], output, done
+               build_action.copyAssets [asset], false, output, done
 
             it "should copy file to correct directory", () ->
                fs.existsSync(path.join(output, "test.css")).should.be.true

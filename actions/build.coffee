@@ -14,7 +14,7 @@ mod = module.exports = (program, done) ->
    
    mod.createOutputDirectory(outDir, program.empty or false)
    mod.compileViews config.views, outDir
-   mod.copyAssets config.assets, outDir, () ->
+   mod.copyAssets config.assets, program.debug or false, outDir, () ->
       process.chdir originalDir
       done() if done
 
@@ -64,7 +64,7 @@ mod.compileViews = (config, outDir) ->
 
    compileViewDirectory viewDir
 
-mod.copyAssets = (assets, outDir, done) ->
+mod.copyAssets = (assets, debug, outDir, done) ->
    counter = assets.length
    if counter == 0 then done() if done
    for asset in assets
@@ -79,17 +79,17 @@ mod.copyAssets = (assets, outDir, done) ->
       # Compile assets
       ext = path.extname(asset.from).replace(".", "")
       compileFn = mod.compileAsset[ext] or mod.compileAsset["none"]
-      compileFn asset, (err) ->
+      compileFn asset, debug, (err) ->
          throw err if err
          if --counter <= 0 then done() if done
 
 mod.compileAsset = 
-   none: (asset, done) -> fs.copy asset.from, asset.to, done
-   coffee: (asset, done) ->
-      snockets.getConcatenation asset.from, minify: true, (err, js) ->
+   none: (asset, debug, done) -> fs.copy asset.from, asset.to, done
+   coffee: (asset, debug, done) ->
+      snockets.getConcatenation asset.from, minify: !debug, (err, js) ->
          throw err if err
          fs.writeFile asset.to, js, done 
-   styl: (asset, done) ->
+   styl: (asset, debug, done) ->
       fs.readFile asset.from, (err, data) ->
          throw err if err
 
