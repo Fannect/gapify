@@ -1,12 +1,11 @@
 {
    "author": "Blake VanLandingham",
-   "name": "Gapify",
+   "name": "gapify",
    "version": "0.0.1",
    "engines": {
       "node": ">= 0.6.x",
       "npm": "1.1.x"
    },
-   "private": true,
    "dependencies": {
       "coffee-script": "1.4.0",
       "jade": "0.27.7",
