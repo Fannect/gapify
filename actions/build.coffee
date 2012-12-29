@@ -5,48 +5,44 @@ snockets = new (require "snockets")()
 stylus = require "stylus"
 jade = require "jade"
 
-config = null
-outDir = null
-originalDir = null
-
-module.exports = (program) ->
+mod = module.exports = (program, done) ->
    originalDir = process.cwd()
 
-   if not changeDirectory(program) then return
-   if not loadConfig() then return
-   
-   createOutFolder(program)
-   compileViews()
-   copyAssets () ->
+   mod.changeWorkingDirectory(program.chdir)
+   outDir = path.join process.cwd(), program.output or config.output 
+   config = mod.loadConfig()
+
+   mod.createOutputDirectory(outDir, program.empty or false)
+   mod.compileViews config.views, outDir
+   mod.copyAssets config.assets, outDir, () ->
       process.chdir originalDir
       console.log "Complete."
+      done() if done
 
-changeDirectory = (program) ->
-   if program.chdir
-      try  
-         process.chdir program.chdir
-      catch e
-         console.log "chdir: invalid directory"
-         return false
-   return true
+mod.changeWorkingDirectory = (dir) ->
+   if dir then process.chdir dir
+      
+mod.loadConfig = () ->
+   defaultOptions = require "../default.json"
+   userOptions = require path.join process.cwd(), "gapify.json"
+   return _.extend defaultOptions, userOptions
 
-loadConfig = () ->
-   try
-      defaultOptions = require "./default.json"
-      userOptions = require path.join process.cwd(), "gapify.json"
-      config = _.extend defaultOptions, userOptions
-   catch e
-      console.log "error with 'gapify.json':", e
-      return false
-   return true
+mod.createOutputDirectory = (dir, empty) ->
+   if fs.existsSync dir
+      if empty then mod.emptyDirectory dir
+   else
+      fs.mkdirsSync dir
 
-createOutFolder = (program) ->
-   outDir = path.join process.cwd(), config.output   
-   unless fs.existsSync outDir then fs.mkdirsSync outDir
+mod.emptyDirectory = (dir) ->
+   list = fs.readdirSync dir
+   ignore = [".git", ".gitignore"]
 
-compileViews = () ->
-   viewDir = path.join process.cwd(), config.views.directory
+   for entity in list
+      unless path.basename(entity) in ignore 
+         fs.removeSync path.join dir, entity
 
+mod.compileViews = (config, outDir) ->
+   viewDir = path.join process.cwd(), config.directory
    compileViewDirectory = (dir) ->
       list = fs.readdirSync dir
 
@@ -58,7 +54,7 @@ compileViews = () ->
             compileViewDirectory filePath
          else
             oldFilename = filePath.replace(viewDir, "").replace(/^[\\\/]/g, "")
-            unless oldFilename in config.views.ignore
+            unless oldFilename in config.ignore
                filename = oldFilename.replace("jade", "html").replace(/[\\\/]/g, "-")
                contents = fs.readFileSync filePath
                html = jade.compile(contents,
@@ -69,10 +65,10 @@ compileViews = () ->
 
    compileViewDirectory viewDir
 
-copyAssets = (done) ->
-   counter = config.assets.length
+mod.copyAssets = (assets, outDir, done) ->
+   counter = assets.length
    if counter == 0 then done() if done
-   for asset in config.assets
+   for asset in assets
       asset.from = path.join process.cwd(), asset.from
       asset.to = asset.to.replace("{out}", outDir)
       
@@ -81,11 +77,12 @@ copyAssets = (done) ->
       unless fs.existsSync folder then fs.mkdirsSync folder
 
       # Compile assets
-      compileAsset[asset.compile] asset, (err) ->
+      compileFn = compileAsset[asset.compile] or compileAsset["none"]
+      compileFn asset, (err) ->
          throw err if err
          if --counter == 0 then done() if done
 
-compileAsset = 
+mod.compileAsset = 
    none: (asset, done) -> fs.copy asset.from, asset.to, done
    coffee: (asset, done) ->
       snockets.getConcatenation asset.from, minify: true, (err, js) ->
@@ -95,13 +92,13 @@ compileAsset =
       fs.readFile asset.from, (err, data) ->
          throw err if err
          # Fix paths to imports
-         str = fixImportPaths(asset, data.toString())
+         str = mod.fixImportPaths(asset, data.toString())
 
          stylus.render str, {filename: asset.from}, (err, css) ->
             throw err if err
             fs.writeFile asset.to, css, done
 
-fixImportPaths = (asset, str) ->
+mod.fixImportPaths = (asset, str) ->
    imports = str.match /^@import[/w]*.+$/gm
 
    for im, i in imports

@@ -7,8 +7,9 @@ var build_action = require("./actions/build");
 
 program
    .version("0.0.1")
-   .option("-o, --output <path>", "change the output directory, defaults to '/bin'", "/bin")
-   .option("-c --chdir <path>", "change the working directory");
+   .option("-o, --output <path>", "change the output directory, defaults to '/bin'")
+   .option("-c --chdir <path>", "change the working directory")
+   .option("-e --empty", "empties output directory (excluding .git and .gitignore)");
 
 program
    .command("build")
