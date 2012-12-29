@@ -65,9 +65,7 @@ describe "gapify", () ->
             fs.existsSync(path.join(output, "layout.html")).should.be.false
 
          it "should correctly compile to html", () ->
-            compiled = fs.readFileSync(path.join(output, "test.html")).toString()
-            correct = fs.readFileSync(path.join(process.cwd(), "/assets/test.html")).toString()
-            compiled.should.equal(correct)
+            checkAgainstFile path.join(output, "test.html"), path.join(process.cwd(), "assets/test.html")
 
       describe "compileAsset", () ->
          output = null
@@ -75,31 +73,63 @@ describe "gapify", () ->
             build_action.changeWorkingDirectory "test"
             build_action.createOutputDirectory "bin"
             output = path.join(process.cwd(), "bin")
-         afterEach () ->
-            fs.removeSync output
          after () ->
+            fs.removeSync output
             process.chdir currentDir 
 
          describe "with compile 'none'", () ->
+            afterEach () ->
+               fs.removeSync output
 
             it "should copy file", (done) ->
                asset = 
-                  from: path.join(process.cwd(), "assets/test.html")
-                  to: path.join output, "text.html"
+                  from: "assets/test.html"
+                  to: "{out}/text.html"
                   compile: "none",
                   is_directory: false
-               build_action.compileAsset["none"] asset, () ->
-                  fs.existsSync(asset.to).should.be.true
+               build_action.copyAssets [asset], output, () ->
+                  fs.existsSync(path.join(output, "text.html")).should.be.true
                   done()
 
             it "should copy folder", (done) ->
                asset = 
-                  from: path.join(process.cwd(), "assets/test.html")
-                  to: path.join output, "text.html"
+                  from: "assets/views/sub"
+                  to: "{out}/sub"
                   compile: "none",
-                  is_directory: false
-               build_action.compileAsset["none"] asset, () ->
-                  fs.existsSync(asset.to).should.be.true
+                  is_directory: true
+               build_action.copyAssets [asset], output, () ->
+                  fs.existsSync(path.join(output, "sub/deep.jade")).should.be.true
                   done()
 
+         describe "with compile 'coffee'", () ->
+            before (done) ->
+               asset =
+                  from: "assets/test.coffee"
+                  to: "{out}/test.js"
+                  compile: "coffee"
+               build_action.copyAssets [asset], output, done
 
+            it "should copy file to correct directory", () ->
+               fs.existsSync(path.join(output, "test.js")).should.be.true
+
+            it "should compile imported files and minify", () ->
+               checkAgainstFile path.join(output, "test.js"), path.join(process.cwd(), "assets/test.js")
+
+         describe "with compile 'stylus'", () ->
+            before (done) ->
+               asset = 
+                  from: "assets/test.styl"
+                  to: "{out}/test.css"
+                  compile: "stylus"
+               build_action.copyAssets [asset], output, done
+
+            it "should copy file to correct directory", () ->
+               fs.existsSync(path.join(output, "test.css")).should.be.true
+
+            it "should compile imported stylus files", () ->
+               checkAgainstFile path.join(output, "test.css"), path.join(process.cwd(), "assets/test.css")
+
+checkAgainstFile = (compiled, correct) ->
+   compiled = fs.readFileSync(compiled).toString()
+   correct = fs.readFileSync(correct).toString()
+   compiled.should.equal(correct)

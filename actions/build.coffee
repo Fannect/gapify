@@ -77,10 +77,10 @@ mod.copyAssets = (assets, outDir, done) ->
       unless fs.existsSync folder then fs.mkdirsSync folder
 
       # Compile assets
-      compileFn = compileAsset[asset.compile] or compileAsset["none"]
+      compileFn = mod.compileAsset[asset.compile] or mod.compileAsset["none"]
       compileFn asset, (err) ->
          throw err if err
-         if --counter == 0 then done() if done
+         if --counter <= 0 then done() if done
 
 mod.compileAsset = 
    none: (asset, done) -> fs.copy asset.from, asset.to, done
@@ -91,6 +91,7 @@ mod.compileAsset =
    stylus: (asset, done) ->
       fs.readFile asset.from, (err, data) ->
          throw err if err
+
          # Fix paths to imports
          str = mod.fixImportPaths(asset, data.toString())
 
