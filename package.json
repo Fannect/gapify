@@ -1,10 +1,25 @@
 {
-   "author": "Blake VanLandingham",
    "name": "gapify",
-   "version": "0.0.2",
+   "description": "Command-line tool to compile Express apps into PhoneGap apps",
+   "author": "Blake VanLandingham <blakevanlan@gmail.com>",
+   "keywords": [
+      "PhoneGap",
+      "compile",
+      "Express",
+      "command-line"
+   ],
+   "version": "0.0.3",
    "engines": {
       "node": ">= 0.6.x",
       "npm": "1.1.x"
+   },
+   "bin": {
+      "gapify": "./gapify"
+   },
+   "main": "./gapify",
+   "repository": {
+      "type": "git",
+      "url": "git@github.com:Fannect/gapify.git"
    },
    "dependencies": {
       "coffee-script": "1.4.0",
