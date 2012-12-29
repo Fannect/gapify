@@ -16,7 +16,6 @@ mod = module.exports = (program, done) ->
    mod.compileViews config.views, outDir
    mod.copyAssets config.assets, outDir, () ->
       process.chdir originalDir
-      console.log "Complete."
       done() if done
 
 mod.changeWorkingDirectory = (dir) ->
