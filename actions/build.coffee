@@ -4,12 +4,18 @@ _ = require "underscore"
 snockets = new (require "snockets")()
 stylus = require "stylus"
 jade = require "jade"
-# execSync = require "execSync"
 async = require "async"
 exec = require('child_process').exec
 
+# Colors for console.log
+red = "\u001b[31m"
+green = "\u001b[32m"
+white = "\u001b[37m"
+reset = "\u001b[0m"
+
 mod = module.exports = (program, done) ->
    originalDir = process.cwd()
+   startTime = new Date() / 1
 
    mod.changeWorkingDirectory(program.chdir)
    config = mod.loadConfig()
@@ -18,10 +24,18 @@ mod = module.exports = (program, done) ->
    mod.createOutputDirectory(outDir, program.empty or false)
    mod.compileViews config.views, outDir
    mod.copyAssets config.assets, program.debug or false, outDir, () ->
-      mod.changeWorkingDirectory outDir
-      mod.runCommands config.on_success, (err) ->
-         throw err if err
-         mod.changeWorkingDirectory originalDir
+      
+      unless program.silent
+         ms = (new Date() / 1) - startTime
+         console.log "#{white}Finished #{green}(#{ms} ms)#{reset}" 
+         
+      if config.on_success && config.on_success?.length > 0
+         console.log "#{white}Starting commands#{reset} #{green}(#{config.on_success.length})#{white}:#{reset}\n"
+         mod.changeWorkingDirectory outDir
+         mod.runCommands config.on_success, program.silent, () ->
+            mod.changeWorkingDirectory originalDir
+            done() if done
+      else
          done() if done
 
 mod.changeWorkingDirectory = (dir) ->
@@ -119,21 +133,26 @@ mod.fixImportPaths = (asset, str) ->
 
    return str
 
-mod.runCommands = (commands, done) ->
-   unless commands then return
+mod.runCommands = (commands, silent, done) ->
+   unless commands and commands?.length > 0 then return
 
-   # red = "\x33[31m"
-   # green = "\x33[32m"
-   # reset = "\x33[0m"
+   run = (entry, next) ->
+      exec entry.command, (err, stdout, stderr) ->
+         
+         unless silent
+            color = if err then red else green
+            result = (stderr or stdout or "(no output)\n").replace(/\n/g, "\n\t\t")
+            output = "\t#{white}#{entry.command}:#{reset}\n\t\t#{color}#{result}#{reset}"
+            console.log output
+            
+         if err 
+            if entry.on_error == "continue"
+               console.log "#{color}\n(continuing after error)#{reset}" unless silent
+            else
+               console.log "#{color}\n(stopping after error)#{reset}" unless silent
+               return next err
 
-   run = (command, next) ->
-      exec command, (err, stdout, stderr) ->
-         # color = if stderr then red else green
-         color = ""
-         output = "#{command}: #{color}#{stdout}#{reset}"
-         console.log output
-         console.log stderr
-         next(stderr)
+         next()
 
    async.forEachSeries commands, run, done
    
