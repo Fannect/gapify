@@ -10,7 +10,7 @@ Gapify relies on a configuration file, `gapify.json`, in the root directory. Her
 
 ```javascript
 {
-   "output": "../fannect-phonegap", // specifies the output directory
+   "output": "./bin", // specifies the output directory
    "assets": [
       {
          "from":"assets/js/tree.coffee", // file type is inferred from extension
