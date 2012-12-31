@@ -135,14 +135,17 @@ mod.fixImportPaths = (asset, str) ->
 
 mod.runCommands = (commands, silent, done) ->
    unless commands and commands?.length > 0 then return
+   startTime = new Date() / 1 unless silent
 
    run = (entry, next) ->
+
+      unless silent then console.log "\t#{white}#{entry.command}#{reset}"
       exec entry.command, (err, stdout, stderr) ->
          
          unless silent
             color = if err then red else green
             result = (stderr or stdout or "(no output)\n").replace(/\n/g, "\n\t\t")
-            output = "\t#{white}#{entry.command}:#{reset}\n\t\t#{color}#{result}#{reset}"
+            output = "\n\t\t#{color}#{result}#{reset}"
             console.log output
             
          if err 
@@ -154,5 +157,9 @@ mod.runCommands = (commands, silent, done) ->
 
          next()
 
-   async.forEachSeries commands, run, done
+   async.forEachSeries commands, run, (err) ->
+      if err and not silent
+         ms = (new Date() / 1) - startTime
+         console.log "#{white}Finished #{green}(#{ms} ms)#{reset}" 
+
    
