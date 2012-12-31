@@ -9,11 +9,11 @@ Gapify relies on a configuration file, `gapify.json`, in the root directory. Her
 
 ```javascript
 {
-   "output": "../fannect-phonegap",
+   "output": "../fannect-phonegap", // specifies the output directory
    "assets": [
       {
-         "from":"assets/js/tree.coffee",
-         "to":"{out}/js/tree.js"
+         "from":"assets/js/tree.coffee", // file type is inferred from extension
+         "to":"{out}/js/tree.js" // `{out}` is replaced by output directory
       },
       {
          "from":"assets/css/skin.styl",
@@ -23,24 +23,23 @@ Gapify relies on a configuration file, `gapify.json`, in the root directory. Her
          "from":"assets/css/lib/fannect.css",
          "to":"{out}/css/lib/fannect.css"
       },
-      
       {
-         "from":"public/images",
+         "from":"public/images", // directories can be copied (included subdirectories)
          "to":"{out}/images"
       }
    ],
    "views": {
-      "directory":"views",
-      "ignore":["layout.jade"]
+      "directory":"views", // directory of all the Jade templates
+      "ignore":["layout.jade"] // files that are layouts and should be ignored
    },
-   "on_success": [
+   "on_success": [ // this section allows for terminal commands to be executed after files are compiled/copied
       {
-         "command": "git add . -A",
-         "on_error": "stop"
+         "command": "git add . -A", // commands are executed with output directory as the working directory
+         "on_error": "stop" // does NOT execute following commands on an error
       },
       {
          "command": "git commit -m \"Auto update by Gapify.\"",
-         "on_error": "continue"
+         "on_error": "continue" // DOES execute following commands on an error
       },
       {
          "command": "git push origin master",
@@ -50,4 +49,31 @@ Gapify relies on a configuration file, `gapify.json`, in the root directory. Her
 }
 ```
 
-### Sections
+## Install
+```
+npm install -g gapify
+```
+
+## Command-line Options
+```
+   Usage: gapify [options] [command]
+   
+   Commands:
+   
+      build                   compile to PhoneGap compliant app
+      
+   Options:
+   
+      -h, --help              output usage information
+      -o, --output <path>     change the output directory, overrides config file
+      -c, --chdir <path>      change the working directory
+      -e, --empty             empties output directory before compilation (excluding .gt and .gitignore)
+      -d, --debug             does not minify JS and CSS
+      -s, --silent            suppresses console output
+      
+```
+
+## Running the Tests
+```
+npm test
+```
