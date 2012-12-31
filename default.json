@@ -3,5 +3,6 @@
    "copy": null,
    "views": {
       "directory": "views"
-   }
+   },
+   "on_success": null
 }

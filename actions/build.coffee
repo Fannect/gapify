@@ -4,6 +4,9 @@ _ = require "underscore"
 snockets = new (require "snockets")()
 stylus = require "stylus"
 jade = require "jade"
+# execSync = require "execSync"
+async = require "async"
+exec = require('child_process').exec
 
 mod = module.exports = (program, done) ->
    originalDir = process.cwd()
@@ -15,8 +18,11 @@ mod = module.exports = (program, done) ->
    mod.createOutputDirectory(outDir, program.empty or false)
    mod.compileViews config.views, outDir
    mod.copyAssets config.assets, program.debug or false, outDir, () ->
-      process.chdir originalDir
-      done() if done
+      mod.changeWorkingDirectory outDir
+      mod.runCommands config.on_success, (err) ->
+         throw err if err
+         mod.changeWorkingDirectory originalDir
+         done() if done
 
 mod.changeWorkingDirectory = (dir) ->
    if dir then process.chdir dir
@@ -113,4 +119,21 @@ mod.fixImportPaths = (asset, str) ->
 
    return str
 
+mod.runCommands = (commands, done) ->
+   unless commands then return
+
+   # red = "\x33[31m"
+   # green = "\x33[32m"
+   # reset = "\x33[0m"
+
+   run = (command, next) ->
+      exec command, (err, stdout, stderr) ->
+         # color = if stderr then red else green
+         color = ""
+         output = "#{command}: #{color}#{stdout}#{reset}"
+         console.log output
+         console.log stderr
+         next(stderr)
+
+   async.forEachSeries commands, run, done
    
