@@ -1,5 +1,6 @@
 # Gapify
 ### Command-line tool to compile Express apps into PhoneGap apps
+[![Build Status](https://secure.travis-ci.org/Fannect/gapify.png?branch=master)](https://travis-ci.org/Fannect/gapify)
 
 It turned out to be a fairly flexible tool that can be used by anyone who wants to move files around and compile CoffeeScript, Jade, or Stylus files. More files types should be supported soon.
 
