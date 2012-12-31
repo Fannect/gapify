@@ -150,9 +150,9 @@ mod.runCommands = (commands, silent, done) ->
             
          if err 
             if entry.on_error == "continue"
-               console.log "#{color}\t(continuing after error)#{reset}\n" unless silent
+               console.log "#{color}\t\t(continuing after error)#{reset}\n" unless silent
             else
-               console.log "#{color}\t(stopping after error)#{reset}\n" unless silent
+               console.log "#{color}\t\t(stopping after error)#{reset}\n" unless silent
                return next err
 
          next()
