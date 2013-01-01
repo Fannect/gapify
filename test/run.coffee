@@ -3,6 +3,7 @@ path = require "path"
 fs = require "fs-extra"
 should = require "should"
 build_action = require "../actions/build"
+exec = require('child_process').exec
 
 currentDir = process.cwd()
 
@@ -105,7 +106,7 @@ describe "gapify", () ->
                build_action.copyAssets [asset], false, output, done
 
             it "should copy file to correct directory", () ->
-               fs.existsSync(path.join(output, "test.js")).should.be.true
+               checkExistance path.join(output, "test.js")
 
             it "should compile files and minify", () ->
                checkAgainstFile path.join(output, "test.js"), path.join(process.cwd(), "assets/test.js")
@@ -126,10 +127,46 @@ describe "gapify", () ->
                build_action.copyAssets [asset], false, output, done
 
             it "should copy file to correct directory", () ->
-               fs.existsSync(path.join(output, "test.css")).should.be.true
+               checkExistance path.join(output, "test.css")
 
             it "should compile imported stylus files", () ->
                checkAgainstFile path.join(output, "test.css"), path.join(process.cwd(), "assets/test.css")
+
+      describe "command-line", () ->
+
+         it "should complete without errors", (done) ->
+            exec "./gapify build -s -c ./test/assets", (err) ->
+               return done err if err
+               checkAgainstFile "./test/bin/test.html", "./test/assets/test.html"
+               checkAgainstFile "./test/bin/js/test.js", "./test/assets/test.js"
+               checkAgainstFile "./test/bin/css/test.css", "./test/assets/test.css"
+               checkExistance "./test/bin/sub"
+               fs.removeSync "./test/bin"
+               done()
+
+         it "should complete with --debug option", (done) ->
+            exec "./gapify build -sd -c ./test/assets", (err) ->
+               return done err if err
+               checkAgainstFile "./test/bin/test.html", "./test/assets/test.html"
+               checkAgainstFile "./test/bin/js/test.js", "./test/assets/test-debug.js"
+               checkAgainstFile "./test/bin/css/test.css", "./test/assets/test.css"
+               checkExistance "./test/bin/sub"
+               fs.removeSync "./test/bin"
+               done()
+
+         it "should complete with --output option", (done) ->
+            exec "./gapify build -s -c ./test/assets -o ../otherbin", (err) ->
+               return done err if err
+               checkAgainstFile "./test/otherbin/test.html", "./test/assets/test.html"
+               checkAgainstFile "./test/otherbin/js/test.js", "./test/assets/test.js"
+               checkAgainstFile "./test/otherbin/css/test.css", "./test/assets/test.css"
+               checkExistance "./test/otherbin/sub"
+               fs.removeSync "./test/otherbin"
+               done()
+
+
+checkExistance = (entity) ->
+   fs.existsSync(entity).should.be.true
 
 checkAgainstFile = (compiled, correct) ->
    compiled = fs.readFileSync(compiled).toString()

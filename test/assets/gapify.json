@@ -1,0 +1,22 @@
+{
+   "output": "../bin",
+   "assets": [
+      {
+         "from":"test.coffee",
+         "to":"{out}/js/test.js"
+      },
+      {
+         "from":"test.styl",
+         "to":"{out}/css/test.css"
+      },
+      {
+         "from":"views/sub",
+         "to":"{out}/sub"
+      }
+   ],
+   "views": {
+      "directory":"views",
+      "ignore":["layout.jade"]
+   },
+   "on_success": []
+}

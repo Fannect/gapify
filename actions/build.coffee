@@ -138,7 +138,6 @@ mod.runCommands = (commands, silent, done) ->
    startTime = new Date() / 1 unless silent
 
    run = (entry, next) ->
-
       unless silent then console.log "\t#{white}#{entry.command}#{reset}"
       exec entry.command, (err, stdout, stderr) ->
          
