@@ -49,6 +49,9 @@ Gapify relies on a configuration file, `gapify.json`, in the root directory. Her
    ]
 }
 ```
+When using PhoneGap, file paths using the root (such as `/blah`) are not resolved correctly. To compensate, the folder structure of the views is flattened and all files in the view directory are renamed according to their previous folder structure.
+
+Example: `sub/example.jade` -> `sub-example.html`
 
 ## Install
 ```
