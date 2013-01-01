@@ -22,7 +22,7 @@ mod = module.exports = (program, done) ->
    outDir = path.join process.cwd(), program.output or config.output 
    
    mod.createOutputDirectory(outDir, program.empty or false)
-   mod.compileViews config.views, outDir
+   mod.compileViews config.views, outDir, (program.debug or false)
    mod.copyAssets config.assets, program.debug or false, outDir, () ->
       
       unless program.silent
@@ -60,7 +60,7 @@ mod.emptyDirectory = (dir) ->
       unless path.basename(entity) in ignore 
          fs.removeSync path.join dir, entity
 
-mod.compileViews = (config, outDir) ->
+mod.compileViews = (config, outDir, debug) ->
    viewDir = path.join process.cwd(), config.directory
    compileViewDirectory = (dir) ->
       list = fs.readdirSync dir
@@ -77,7 +77,7 @@ mod.compileViews = (config, outDir) ->
                filename = oldFilename.replace("jade", "html").replace(/[\\\/]/g, "-")
                contents = fs.readFileSync filePath
                html = jade.compile(contents,
-                  debug: false
+                  debug: debug
                   filename: filePath
                )({settings: {views:viewDir}, filename: filePath})
                fs.writeFileSync path.join(outDir, filename), html

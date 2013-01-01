@@ -164,7 +164,6 @@ describe "gapify", () ->
                fs.removeSync "./test/otherbin"
                done()
 
-
 checkExistance = (entity) ->
    fs.existsSync(entity).should.be.true
 
