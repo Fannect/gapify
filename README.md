@@ -33,7 +33,7 @@ Gapify relies on a configuration file, `gapify.json`, in the root directory. Her
       "directory":"views", // directory of all the Jade templates
       "ignore":["layout.jade"] // files that are layouts and should be ignored
    },
-   "on_success": [ // this section allows for terminal commands to be executed after files are compiled/copied
+   "on_success": [ // this section allows for terminal commands to be executed on success compilation
       {
          "command": "git add . -A", // commands are executed with output directory as the working directory
          "on_error": "stop" // does NOT execute following commands on an error
