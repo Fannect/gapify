@@ -33,7 +33,7 @@ Gapify relies on a configuration file, `gapify.json`, in the root directory. Her
       "directory":"views", // directory of all the Jade templates
       "ignore":["layout.jade"] // files that are layouts and should be ignored
    },
-   "on_success": [ // this section allows for terminal commands to be executed after files are compiled/copied
+   "on_success": [ // this section allows for terminal commands to be executed on success compilation
       {
          "command": "git add . -A", // commands are executed with output directory as the working directory
          "on_error": "stop" // does NOT execute following commands on an error
@@ -49,6 +49,9 @@ Gapify relies on a configuration file, `gapify.json`, in the root directory. Her
    ]
 }
 ```
+When using PhoneGap, file paths using the root (such as `/blah`) are not resolved correctly. To compensate, the folder structure of the views is flattened and all files in the view directory are renamed according to their previous folder structure.
+
+Example: `sub/example.jade` -> `sub-example.html`
 
 ## Install
 ```
