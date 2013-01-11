@@ -2,58 +2,61 @@ require "mocha"
 path = require "path"
 fs = require "fs-extra"
 should = require "should"
-build_action = require "../actions/build"
 exec = require('child_process').exec
+
+loader = require "../utils/loader"
+build_action = require "../actions/build"
 
 currentDir = process.cwd()
 
 describe "gapify", () ->
 
+   describe "loader", () ->
+      it "should merge configs", () ->
+         program =
+            output: "../other"
+            chdir: "./test/assets"
+            run: "testCommand"
+         config = loader program
+
+         config.should.have.property("output")
+         config.should.have.property("assets")
+         config.should.have.property("views")
+         config.should.have.property("default_command")
+         config.should.have.property("commands")
+         config.run_command.should.equal("testCommand")
+
+         process.chdir config.starting_directory
+
    describe "build action", () ->
-     
-      describe "changeWorkingDirectory", () ->
-         afterEach () ->
-            process.chdir currentDir   
-
-         it "should change working directory", () ->
-            current = process.cwd()
-            build_action.changeWorkingDirectory("test")
-            process.cwd().should.equal(path.join current, "test")
-
-         it "should not change working directory if no parameters", () ->
-            current = process.cwd()
-            build_action.changeWorkingDirectory()
-            process.cwd().should.equal current
-
-         it "should throw exception on nonexistant directory", () ->
-            ( () ->
-              build_action.changeWorkingDirectory("blah-blah")
-            ).should.throw()
 
       describe "createOutputDirectory", () ->
          before () ->
-            build_action.changeWorkingDirectory "test"
+            process.chdir "./test"
          after () ->
             process.chdir currentDir   
 
          it "should create directory", () ->
-            build_action.createOutputDirectory "bin"
-            fs.existsSync(path.join process.cwd(), "bin").should.be.true
+            build_action.createOutputDirectory output: "./bin"
+            checkExistance path.join process.cwd(), "./bin"
 
          it "should empty directory if options is set", () ->
-            filepath = path.join(process.cwd(), "bin/test.txt")
+            filepath = path.join(process.cwd(), "./bin/test.txt")
             fs.writeFileSync filepath, "test"
-            build_action.createOutputDirectory "bin", true
+            build_action.createOutputDirectory output: "./bin", empty: true
             fs.existsSync(filepath).should.be.false
             
       describe "compileViews", () ->
          output = null
-         before () ->
-            build_action.changeWorkingDirectory "test"
-            build_action.createOutputDirectory "bin"
-            output = path.join(process.cwd(), "bin")
-            config = { directory: "assets/views", ignore: ["layout.jade"] } 
-            build_action.compileViews config, output
+         before (done) ->
+            process.chdir "./test"
+            build_action.createOutputDirectory output: "./bin"
+            output = path.join(process.cwd(), "./bin")
+            build_action.compileViews 
+               viewDir: path.join(process.cwd(), "./assets/views")
+               ignore: ["layout.jade"]
+               output: output
+            , done
          after () ->
             fs.removeSync output
             process.chdir currentDir 
@@ -71,9 +74,9 @@ describe "gapify", () ->
       describe "compileAsset", () ->
          output = null
          before () ->
-            build_action.changeWorkingDirectory "test"
-            build_action.createOutputDirectory "bin"
-            output = path.join(process.cwd(), "bin")
+            process.chdir "./test"
+            build_action.createOutputDirectory output: "./bin"
+            output = path.join(process.cwd(), "./bin")
          after () ->
             fs.removeSync output
             process.chdir currentDir 
@@ -86,7 +89,10 @@ describe "gapify", () ->
                asset = 
                   from: "assets/test.html"
                   to: "{out}/text.html"
-               build_action.copyAssets [asset], false, output, () ->
+               build_action.buildAssets [asset],
+                  output: output
+                  debug: false
+               , () ->
                   fs.existsSync(path.join(output, "text.html")).should.be.true
                   done()
 
@@ -94,7 +100,10 @@ describe "gapify", () ->
                asset = 
                   from: "assets/views/sub"
                   to: "{out}/sub"
-               build_action.copyAssets [asset], false, output, () ->
+               build_action.buildAssets [asset],
+                  output: output
+                  debug: false
+               , () ->
                   fs.existsSync(path.join(output, "sub/deep.jade")).should.be.true
                   done()
 
@@ -103,7 +112,10 @@ describe "gapify", () ->
                asset =
                   from: "assets/test.coffee"
                   to: "{out}/test.js"
-               build_action.copyAssets [asset], false, output, done
+               build_action.buildAssets [asset],
+                  output: output
+                  debug: false
+               , done
 
             it "should copy file to correct directory", () ->
                checkExistance path.join(output, "test.js")
@@ -115,7 +127,10 @@ describe "gapify", () ->
                asset = 
                   from: "assets/test.coffee"
                   to: "{out}/test.js"
-               build_action.copyAssets [asset], true, output, () ->
+               build_action.buildAssets [asset],
+                  output: output
+                  debug: true
+               , () ->
                   checkAgainstFile path.join(output, "test.js"), path.join(process.cwd(), "assets/test-debug.js")
                   done()
 
@@ -124,7 +139,10 @@ describe "gapify", () ->
                asset = 
                   from: "assets/test.styl"
                   to: "{out}/test.css"
-               build_action.copyAssets [asset], false, output, done
+               build_action.buildAssets [asset],
+                  output: output
+                  debug: true
+               , done
 
             it "should copy file to correct directory", () ->
                checkExistance path.join(output, "test.css")

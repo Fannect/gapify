@@ -3,21 +3,35 @@
 require("coffee-script");
 var program = require("commander");
 
+var load = require("./utils/loader");
+
 var build_action = require("./actions/build");
+var watch_action = require("./actions/watch");
 
 program
    .option("-o, --output <path>", "change the output directory, defaults to '/bin'")
    .option("-c, --chdir <path>", "change the working directory")
-   .option("-e, --empty", "empties output directory (excluding .git and .gitignore)")
+   .option("-w, --watch", "watchings the working directory for changes")
+   .option("-e, --empty", "empties output directory (excluding .git and .gitignore)", false)
    .option("-r, --run <command>", "runs command after successful build")
-   .option("-d, --debug", "does not minify JS and CSS")
-   .option("-s, --silent", "suppresses console.logs");
+   .option("-d, --debug", "does not minify JS and CSS", false)
+   .option("-s, --silent", "suppresses console.logs", false);
 
 program
    .command("build")
-   .description("compile to PhoneGap compliant app")
+   .description("compile files into output directory")
    .action(function (cmd) {
-      build_action(program);
+      config = load(program);
+      build_action(config);
    });
+
+program
+   .command("watch")
+   .description("watch for file changes and compile files that change")
+   .action(function (cmd) {
+      config = load(program);
+      watch_action(config);
+   });
+
 
 program.parse(process.argv);

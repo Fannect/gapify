@@ -1,6 +1,5 @@
 {
    "output": "/bin",
-   "copy": null,
    "views": {
       "directory": "views"
    },

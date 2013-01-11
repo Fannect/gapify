@@ -1,6 +1,5 @@
 fs = require "fs-extra"
 path = require "path"
-_ = require "underscore"
 snockets = new (require "snockets")()
 stylus = require "stylus"
 jade = require "jade"
@@ -13,51 +12,49 @@ green = "\u001b[32m"
 white = "\u001b[37m"
 reset = "\u001b[0m"
 
-mod = module.exports = (program, done) ->
-   originalDir = process.cwd()
-   startTime = new Date() / 1
-
-   mod.changeWorkingDirectory(program.chdir)
-   config = mod.loadConfig()
-   outDir = path.join process.cwd(), program.output or config.output 
+build = module.exports = (config, done) ->
    
-   mod.createOutputDirectory(outDir, program.empty or false)
-   mod.compileViews config.views, outDir
-   mod.copyAssets config.assets, program.debug or false, outDir, () ->
-      
-      unless program.silent
-         ms = (new Date() / 1) - startTime
-         console.log "#{white}Finished #{green}(#{ms} ms)#{reset}" 
+   build.createOutputDirectory(config)
+
+   build.compileViews
+      viewDir: config.views.directory
+      ignore: config.views.ignore
+      output: config.output
+   , () ->
+
+      build.buildAssets config.assets, config, () ->
          
-      if command = program.run or config.default_command
-         unless commandSequence = config.commands?[command]
-            console.log "#{white}Invalid command: #{red}#{command}#{reset}" unless program.silent
+         unless config.silent
+            ms = (new Date() / 1) - config.start_time
+            console.log "#{white}Finished #{green}(#{ms} ms)#{reset}" 
+            
+         if command = config.run_command
+            unless commandSequence = config.commands?[command]
+               console.log "#{white}Invalid command: #{red}#{command}#{reset}" unless config.silent
+               process.chdir config.starting_directory
+               return if done then done()
+
+            console.log "#{white}Running commands: #{command}#{reset} #{green}(#{commandSequence.length})#{white}:#{reset}\n" unless config.silent
+            process.chdir config.output
+            build.runCommands commandSequence, config.silent, () ->
+               process.chdir config.starting_directory
+               done() if done
+         else
+            process.chdir config.starting_directory
             done() if done
-            return 
 
-         console.log "#{white}Running commands: #{command}#{reset} #{green}(#{commandSequence.length})#{white}:#{reset}\n" unless program.silent
-         mod.changeWorkingDirectory outDir
-         mod.runCommands commandSequence, program.silent, () ->
-            mod.changeWorkingDirectory originalDir
-            done() if done
-      else
-         done() if done
-
-mod.changeWorkingDirectory = (dir) ->
-   if dir then process.chdir dir
-      
-mod.loadConfig = () ->
-   defaultOptions = require "../default.json"
-   userOptions = require path.join process.cwd(), "gapify.json"
-   return _.extend defaultOptions, userOptions
-
-mod.createOutputDirectory = (dir, empty) ->
-   if fs.existsSync dir
-      if empty then mod.emptyDirectory dir
+###
+options =
+   output: output directory
+   empty: whether or not to display output logs
+###
+build.createOutputDirectory = (config) ->
+   if fs.existsSync config.output
+      if config.empty then build.emptyDirectory config.output
    else
-      fs.mkdirsSync dir
+      fs.mkdirsSync config.output
 
-mod.emptyDirectory = (dir) ->
+build.emptyDirectory = (dir) ->
    list = fs.readdirSync dir
    ignore = [".git", ".gitignore"]
 
@@ -65,10 +62,33 @@ mod.emptyDirectory = (dir) ->
       unless path.basename(entity) in ignore 
          fs.removeSync path.join dir, entity
 
-mod.compileViews = (config, outDir) ->
+###
+options =
+   viewDir = Directory of all the views
+   ignore = array of filename that should be ignored
+   output = output directory
+###
+build.compileViews = (options, done) ->
+   assets = build.getViews options
+   counter = assets.length
+   if counter == 0 then return if done then done()
+
+   for asset in assets
+      build.compileAsset.jade asset, viewDir: options.viewDir, (err) ->
+         throw err if err
+         if --counter <= 0 then done() if done
+
+###
+options =
+   viewDir = Directory of all the views
+   ignore = array of filename that should be ignored
+   output = output directory
+###
+build.getViews = (options) ->
    ignoreFiles = [".ds_store"]
-   viewDir = path.join process.cwd(), config.directory
-   compileViewDirectory = (dir) ->
+   assets = []
+
+   getViewsFromDirectory = (dir) ->
       list = fs.readdirSync dir
 
       for file in list
@@ -79,57 +99,92 @@ mod.compileViews = (config, outDir) ->
          if path.basename(filePath).toLowerCase() in ignoreFiles then continue
          
          if stat and stat.isDirectory()
-            compileViewDirectory filePath
+            getViewsFromDirectory filePath
          else
-            oldFilename = filePath.replace(viewDir, "").replace(/^[\\\/]/g, "")
-            unless oldFilename in config.ignore
+            oldFilename = filePath.replace(options.viewDir, "").replace(/^[\\\/]/g, "")
+            
+            if (not options.ignore?) or not (oldFilename in options.ignore)
                filename = oldFilename.replace("jade", "html").replace(/[\\\/]/g, "-")
-               contents = fs.readFileSync filePath
-               html = jade.compile(contents,
-                  debug: false
-                  filename: filePath
-               )({settings: {views:viewDir}, filename: filePath})
-               fs.writeFileSync path.join(outDir, filename), html
+               
+               assets.push
+                  from: filePath
+                  to: path.join(options.output, filename)
 
-   compileViewDirectory viewDir
+   getViewsFromDirectory options.viewDir
+   return assets
 
-mod.copyAssets = (assets, debug, outDir, done) ->
+###
+options =
+   debug: in debug mode or not
+   output: output directory
+###
+build.buildAssets = (assets, options, done) ->
    counter = assets.length
-   if counter == 0 then done() if done
+   if counter == 0 then return if done then done()
    for asset in assets
-      asset.from = path.join process.cwd(), asset.from
-      asset.to = asset.to.replace("{out}", outDir)
       
-      # Ensure directory exists
-      stat = fs.statSync asset.from
-      folder = if stat and stat.isDirectory() then asset.to else path.dirname asset.to
-      unless fs.existsSync folder then fs.mkdirsSync folder
-
+      build.prepareAsset asset, options.output
       # Compile assets
       ext = path.extname(asset.from).replace(".", "")
-      compileFn = mod.compileAsset[ext] or mod.compileAsset["none"]
-      compileFn asset, debug, (err) ->
+      compileFn = build.compileAsset[ext] or build.compileAsset["none"]
+      compileFn asset, debug: options?.debug, (err) ->
          throw err if err
          if --counter <= 0 then done() if done
 
-mod.compileAsset = 
-   none: (asset, debug, done) -> fs.copy asset.from, asset.to, done
-   coffee: (asset, debug, done) ->
-      snockets.getConcatenation asset.from, minify: !debug, (err, js) ->
+build.compileAsset = 
+   ###
+   options = (none)
+   ###
+   none: (asset, options, done) -> fs.copy asset.from, asset.to, done
+   
+   ###
+   options = 
+      debug: If true then files are not minified
+   ###
+   coffee: (asset, options, done) ->
+      debug = options?.debug or false
+      snockets.getConcatenation asset.from, minify: not debug, (err, js) ->
          throw err if err
          fs.writeFile asset.to, js, done 
-   styl: (asset, debug, done) ->
+
+   ###
+   options =
+      viewDir: directory of the views
+   ###
+   jade: (asset, options, done) ->
+      fs.readFile asset.from, (err, data) ->
+         throw err if err
+         viewDir = options?.viewDir or process.cwd()
+         html = jade.compile(data,
+            debug: false
+            filename: asset.from
+         )({settings: {views:viewDir}, filename: asset.from})
+         fs.writeFile asset.to, html, done
+   
+   ###
+   options = (none)
+   ###
+   styl: (asset, options, done) ->
       fs.readFile asset.from, (err, data) ->
          throw err if err
 
          # Fix paths to imports
-         str = mod.fixImportPaths(asset, data.toString())
+         str = build.fixImportPaths(asset, data.toString())
 
          stylus.render str, {filename: asset.from}, (err, css) ->
             throw err if err
             fs.writeFile asset.to, css, done
 
-mod.fixImportPaths = (asset, str) ->
+build.prepareAsset = (asset, output) ->
+   asset.from = path.join process.cwd(), asset.from
+   asset.to = asset.to.replace("{out}", output)
+   
+   # Ensure directory exists
+   stat = fs.statSync asset.from
+   folder = if stat and stat.isDirectory() then asset.to else path.dirname asset.to
+   unless fs.existsSync folder then fs.mkdirsSync folder
+
+build.fixImportPaths = (asset, str) ->
    imports = str.match /^@import[/w]*.+$/gm
 
    for im, i in imports
@@ -142,7 +197,7 @@ mod.fixImportPaths = (asset, str) ->
 
    return str
 
-mod.runCommands = (commands, silent, done) ->
+build.runCommands = (commands, silent, done) ->
    unless commands and commands?.length > 0 then return
    startTime = new Date() / 1 unless silent
 
@@ -154,6 +209,8 @@ mod.runCommands = (commands, silent, done) ->
             color = if err then red else green
             if not stderr and not stdout
                console.log "\t\t#{color}(no output)#{reset}\n"
+            else 
+               console.log "\n"
             
          if err 
             if entry.on_error == "continue"
@@ -173,5 +230,6 @@ mod.runCommands = (commands, silent, done) ->
       unless silent
          ms = (new Date() / 1) - startTime
          console.log "#{white}Finished #{green}(#{ms} ms)#{reset}" 
+         done() if done
 
    
