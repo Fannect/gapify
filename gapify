@@ -9,6 +9,7 @@ program
    .option("-o, --output <path>", "change the output directory, defaults to '/bin'")
    .option("-c, --chdir <path>", "change the working directory")
    .option("-e, --empty", "empties output directory (excluding .git and .gitignore)")
+   .option("-r, --run <command>", "runs command after successful build")
    .option("-d, --debug", "does not minify JS and CSS")
    .option("-s, --silent", "suppresses console.logs");
 

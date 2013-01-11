@@ -29,10 +29,14 @@ mod = module.exports = (program, done) ->
          ms = (new Date() / 1) - startTime
          console.log "#{white}Finished #{green}(#{ms} ms)#{reset}" 
          
-      if config.on_success && config.on_success?.length > 0
-         console.log "#{white}Starting commands#{reset} #{green}(#{config.on_success.length})#{white}:#{reset}\n"
+      if command = program.run or config.default_command
+         unless commandSequence = config.commands?[command]
+            console.log "#{white}Invalid command: #{red}#{command}#{reset}" unless program.silent
+            return done() if done
+
+         console.log "#{white}Running commands: #{command}#{reset} #{green}(#{commandSequence.length})#{white}:#{reset}\n" unless program.silent
          mod.changeWorkingDirectory outDir
-         mod.runCommands config.on_success, program.silent, () ->
+         mod.runCommands commandSequence, program.silent, () ->
             mod.changeWorkingDirectory originalDir
             done() if done
       else
@@ -61,6 +65,7 @@ mod.emptyDirectory = (dir) ->
          fs.removeSync path.join dir, entity
 
 mod.compileViews = (config, outDir) ->
+   ignoreFiles = [".ds_store"]
    viewDir = path.join process.cwd(), config.directory
    compileViewDirectory = (dir) ->
       list = fs.readdirSync dir
@@ -69,6 +74,9 @@ mod.compileViews = (config, outDir) ->
          filePath = path.resolve dir, file
          stat = fs.statSync filePath
 
+         # Skip files that should never be copied over (AKA .DS_Store)
+         if path.basename(filePath).toLowerCase() in ignoreFiles then continue
+         
          if stat and stat.isDirectory()
             compileViewDirectory filePath
          else
@@ -138,7 +146,7 @@ mod.runCommands = (commands, silent, done) ->
    startTime = new Date() / 1 unless silent
 
    run = (entry, next) ->
-      unless silent then console.log "\t#{white}#{entry.command}#{reset}"
+      console.log "\t#{white}#{entry.command}#{reset}" unless silent 
       exec entry.command, (err, stdout, stderr) ->
          
          unless silent

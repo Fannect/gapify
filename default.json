@@ -4,5 +4,6 @@
    "views": {
       "directory": "views"
    },
-   "on_success": null
+   "default_command": null,
+   "commands": null
 }

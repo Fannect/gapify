@@ -161,6 +161,7 @@ describe "gapify", () ->
                checkAgainstFile "./test/otherbin/js/test.js", "./test/assets/test.js"
                checkAgainstFile "./test/otherbin/css/test.css", "./test/assets/test.css"
                checkExistance "./test/otherbin/sub"
+               checkExistance "./test/otherbin/lalalalala"
                fs.removeSync "./test/otherbin"
                done()
 

@@ -33,18 +33,23 @@ Gapify relies on a configuration file, `gapify.json`, in the root directory. Her
       "directory":"views", // directory of all the Jade templates
       "ignore":["layout.jade"] // files that are layouts and should be ignored
    },
-   "on_success": [ // this section allows for terminal commands to be executed on success compilation
+   "default_command": "GitCheckIn", // Command run by default on success
+   "commands": [ // this section allows for terminal commands to be executed on success compilation
       {
-         "command": "git add . -A", // commands are executed with output directory as the working directory
-         "on_error": "stop" // does NOT execute following commands on an error
-      },
-      {
-         "command": "git commit -m \"Auto update by Gapify.\"",
-         "on_error": "continue" // DOES execute following commands on an error
-      },
-      {
-         "command": "git push origin master",
-         "on_error": "stop"
+         "GitCheckIn": [
+            {
+               "command": "git add . -A", // commands are executed with output directory as the working directory
+               "on_error": "stop" // does NOT execute following commands on an error
+            },
+            {
+               "command": "git commit -m \"Auto update by Gapify.\"",
+               "on_error": "continue" // DOES execute following commands on an error
+            },
+            {
+               "command": "git push origin master",
+               "on_error": "stop"
+            }
+         ]
       }
    ]
 }
@@ -72,6 +77,7 @@ npm install -g gapify
       -o, --output <path>     change the output directory, overrides config file
       -c, --chdir <path>      change the working directory
       -e, --empty             empties output directory before compilation (excluding .gt and .gitignore)
+      -r, --run <command>     runs command after successful build
       -d, --debug             does not minify JS and CSS
       -s, --silent            suppresses console output
       

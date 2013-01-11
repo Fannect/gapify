@@ -18,5 +18,13 @@
       "directory":"views",
       "ignore":["layout.jade"]
    },
-   "on_success": []
+   "default_command": "makeDir",
+   "commands": {
+      "makeDir": [
+         {
+            "command": "mkdir lalalalala",
+            "on_error": "stop"
+         }
+      ]
+   }
 }
