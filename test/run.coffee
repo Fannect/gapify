@@ -91,7 +91,7 @@ describe "gapify", () ->
                asset = 
                   from: "assets/test.html"
                   to: "{out}/text.html"
-               build_action.buildAssets [asset],
+               build_action.buildAsset asset,
                   output: output
                   debug: false
                , () ->
@@ -102,7 +102,7 @@ describe "gapify", () ->
                asset = 
                   from: "assets/views/sub"
                   to: "{out}/sub"
-               build_action.buildAssets [asset],
+               build_action.buildAsset asset,
                   output: output
                   debug: false
                , () ->

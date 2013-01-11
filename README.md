@@ -67,7 +67,8 @@ npm install -g gapify
    
    Commands:
    
-      build                   compile to PhoneGap compliant app
+      build                   compile files into output directory
+      watch                   watch for file
       
    Options:
    

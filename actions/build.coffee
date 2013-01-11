@@ -3,7 +3,8 @@ path = require "path"
 snockets = new (require "snockets")()
 stylus = require "stylus"
 jade = require "jade"
-runCommands = require "../utils/runCommands"
+commandRunner = new (require "../utils/commandRunner")()
+_ = require "underscore"
 
 # Colors for console.log
 red = "\u001b[31m"
@@ -35,7 +36,7 @@ build = module.exports = (config, done) ->
 
             console.log "#{white}Running commands: #{command}#{reset} #{green}(#{commandSequence.length})#{white}:#{reset}\n" unless config.silent
             process.chdir config.output
-            runCommands commandSequence, config.silent, () ->
+            commandRunner.run commandSequence, config.silent, () ->
                process.chdir config.starting_directory
                done() if done
          else
@@ -125,6 +126,8 @@ build.prepareView = (filePath, options) ->
    asset.from = filePath
    asset.to = path.join(options.output, newName)
 
+   build.ensureAssetPathExists(asset)
+   
    return asset
 
 ###
@@ -145,7 +148,7 @@ options =
    output: output directory
 ###
 build.buildAsset = (asset, options, done) ->
-   build.prepareAsset asset, options.output
+   asset = build.prepareAsset asset, options.output
    ext = path.extname(asset.from).replace(".", "")
    compileFn = build.compileAsset[ext] or build.compileAsset["none"]
    compileFn asset, options, (err) ->
@@ -197,13 +200,18 @@ build.compileAsset =
             fs.writeFile asset.to, css, done
 
 build.prepareAsset = (asset, output) ->
+   asset = _.clone asset
    asset.from = path.join process.cwd(), asset.from unless asset.from.indexOf(process.cwd()) == 0
    asset.to = asset.to.replace("{out}", output)
    
-   # Ensure directory exists
+   build.ensureAssetPathExists(asset)
+   return asset
+
+build.ensureAssetPathExists = (asset) ->
    stat = fs.statSync asset.from
    folder = if stat and stat.isDirectory() then asset.to else path.dirname asset.to
    unless fs.existsSync folder then fs.mkdirsSync folder
+
 
 build.fixImportPaths = (asset, str) ->
    imports = str.match /^@import[/w]*.+$/gm

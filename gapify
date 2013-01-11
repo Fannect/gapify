@@ -11,7 +11,6 @@ var watch_action = require("./actions/watch");
 program
    .option("-o, --output <path>", "change the output directory, defaults to '/bin'")
    .option("-c, --chdir <path>", "change the working directory")
-   .option("-w, --watch", "watchings the working directory for changes")
    .option("-e, --empty", "empties output directory (excluding .git and .gitignore)", false)
    .option("-r, --run <command>", "runs command after successful run")
    .option("-d, --debug", "does not minify JS and CSS", false)

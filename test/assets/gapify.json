@@ -25,6 +25,12 @@
             "command": "mkdir lalalalala",
             "on_error": "stop"
          }
+      ], 
+      "list": [
+         {
+            "command": "ls",
+            "on_error": "stop"
+         }
       ]
    }
 }

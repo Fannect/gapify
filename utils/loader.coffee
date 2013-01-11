@@ -10,8 +10,7 @@ module.exports = (program) ->
 
    programOptions = 
       output: program.output or userOptions.output
-      chdir: program.chdir
-      watch: program.watch or userOptions.watch
+      cwd: process.cwd()
       empty: program.empty or userOptions.empty
       run_command: program.run or userOptions.default_command
       debug: program.debug or userOptions.debug
