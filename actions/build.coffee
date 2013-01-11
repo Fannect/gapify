@@ -32,7 +32,8 @@ mod = module.exports = (program, done) ->
       if command = program.run or config.default_command
          unless commandSequence = config.commands?[command]
             console.log "#{white}Invalid command: #{red}#{command}#{reset}" unless program.silent
-            return done() if done
+            done() if done
+            return 
 
          console.log "#{white}Running commands: #{command}#{reset} #{green}(#{commandSequence.length})#{white}:#{reset}\n" unless program.silent
          mod.changeWorkingDirectory outDir
@@ -146,14 +147,13 @@ mod.runCommands = (commands, silent, done) ->
    startTime = new Date() / 1 unless silent
 
    run = (entry, next) ->
-      console.log "\t#{white}#{entry.command}#{reset}" unless silent 
-      exec entry.command, (err, stdout, stderr) ->
+      console.log "\t#{white}#{entry.command}#{reset}\n" unless silent 
+      child = exec entry.command, (err, stdout, stderr) ->
          
          unless silent
             color = if err then red else green
-            result = (stderr or stdout or "(no output)\n").replace(/\n/g, "\n\t\t")
-            output = "\n\t\t#{color}#{result}#{reset}"
-            console.log output
+            if not stderr and not stdout
+               console.log "\t\t#{color}(no output)#{reset}\n"
             
          if err 
             if entry.on_error == "continue"
@@ -161,8 +161,13 @@ mod.runCommands = (commands, silent, done) ->
             else
                console.log "#{color}\t\t(stopping after error)#{reset}\n" unless silent
                return next err
-
          next()
+
+      unless silent
+         child.stdout.on "data", (data) ->
+            console.log ("\t\t#{green}#{data}#{reset}").replace(/\n/g, "")
+         child.stderr.on "data", (data) ->
+            console.log ("\t\t#{red}#{data}#{reset}").replace(/\n/g, "")
 
    async.forEachSeries commands, run, (err) ->
       unless silent
