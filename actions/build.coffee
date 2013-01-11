@@ -3,8 +3,7 @@ path = require "path"
 snockets = new (require "snockets")()
 stylus = require "stylus"
 jade = require "jade"
-async = require "async"
-exec = require('child_process').exec
+runCommands = require "../utils/runCommands"
 
 # Colors for console.log
 red = "\u001b[31m"
@@ -18,7 +17,7 @@ build = module.exports = (config, done) ->
 
    build.compileViews
       viewDir: config.views.directory
-      ignore: config.views.ignore
+      layouts: config.views.layouts
       output: config.output
    , () ->
 
@@ -36,7 +35,7 @@ build = module.exports = (config, done) ->
 
             console.log "#{white}Running commands: #{command}#{reset} #{green}(#{commandSequence.length})#{white}:#{reset}\n" unless config.silent
             process.chdir config.output
-            build.runCommands commandSequence, config.silent, () ->
+            runCommands commandSequence, config.silent, () ->
                process.chdir config.starting_directory
                done() if done
          else
@@ -65,7 +64,7 @@ build.emptyDirectory = (dir) ->
 ###
 options =
    viewDir = Directory of all the views
-   ignore = array of filename that should be ignored
+   layouts = array of filename that should not be compiled 
    output = output directory
 ###
 build.compileViews = (options, done) ->
@@ -81,7 +80,7 @@ build.compileViews = (options, done) ->
 ###
 options =
    viewDir = Directory of all the views
-   ignore = array of filename that should be ignored
+   layouts = array of filename that should not be compiled 
    output = output directory
 ###
 build.getViews = (options) ->
@@ -101,17 +100,32 @@ build.getViews = (options) ->
          if stat and stat.isDirectory()
             getViewsFromDirectory filePath
          else
-            oldFilename = filePath.replace(options.viewDir, "").replace(/^[\\\/]/g, "")
-            
-            if (not options.ignore?) or not (oldFilename in options.ignore)
-               filename = oldFilename.replace("jade", "html").replace(/[\\\/]/g, "-")
-               
-               assets.push
-                  from: filePath
-                  to: path.join(options.output, filename)
+            asset = build.prepareView filePath, options
+
+            assets.push asset unless asset.is_layout
 
    getViewsFromDirectory options.viewDir
    return assets
+
+###
+options =
+   viewDir = Directory of all the views
+   layouts = array of filename that should not be compiled 
+   output = output directory
+###
+build.prepareView = (filePath, options) ->
+   oldFilename = filePath.replace(options.viewDir, "").replace(/^[\\\/]/g, "")
+   asset = {}
+
+   if options.layouts? and (oldFilename in options.layouts)
+      asset.is_layout = true
+
+   newName = oldFilename.replace("jade", "html").replace(/[\\\/]/g, "-")
+
+   asset.from = filePath
+   asset.to = path.join(options.output, newName)
+
+   return asset
 
 ###
 options =
@@ -122,14 +136,21 @@ build.buildAssets = (assets, options, done) ->
    counter = assets.length
    if counter == 0 then return if done then done()
    for asset in assets
-      
-      build.prepareAsset asset, options.output
-      # Compile assets
-      ext = path.extname(asset.from).replace(".", "")
-      compileFn = build.compileAsset[ext] or build.compileAsset["none"]
-      compileFn asset, debug: options?.debug, (err) ->
-         throw err if err
+      build.buildAsset asset, options, () ->
          if --counter <= 0 then done() if done
+
+###
+options =
+   debug: in debug mode or not
+   output: output directory
+###
+build.buildAsset = (asset, options, done) ->
+   build.prepareAsset asset, options.output
+   ext = path.extname(asset.from).replace(".", "")
+   compileFn = build.compileAsset[ext] or build.compileAsset["none"]
+   compileFn asset, options, (err) ->
+      throw err if err
+      done() if done
 
 build.compileAsset = 
    ###
@@ -176,7 +197,7 @@ build.compileAsset =
             fs.writeFile asset.to, css, done
 
 build.prepareAsset = (asset, output) ->
-   asset.from = path.join process.cwd(), asset.from
+   asset.from = path.join process.cwd(), asset.from unless asset.from.indexOf(process.cwd()) == 0
    asset.to = asset.to.replace("{out}", output)
    
    # Ensure directory exists
@@ -196,40 +217,5 @@ build.fixImportPaths = (asset, str) ->
       str = str.replace "@@import=#{i}", "@import \"#{filename}\""
 
    return str
-
-build.runCommands = (commands, silent, done) ->
-   unless commands and commands?.length > 0 then return
-   startTime = new Date() / 1 unless silent
-
-   run = (entry, next) ->
-      console.log "\t#{white}#{entry.command}#{reset}\n" unless silent 
-      child = exec entry.command, (err, stdout, stderr) ->
-         
-         unless silent
-            color = if err then red else green
-            if not stderr and not stdout
-               console.log "\t\t#{color}(no output)#{reset}\n"
-            else 
-               console.log "\n"
-            
-         if err 
-            if entry.on_error == "continue"
-               console.log "#{color}\t\t(continuing after error)#{reset}\n" unless silent
-            else
-               console.log "#{color}\t\t(stopping after error)#{reset}\n" unless silent
-               return next err
-         next()
-
-      unless silent
-         child.stdout.on "data", (data) ->
-            console.log ("\t\t#{green}#{data}#{reset}").replace(/\n/g, "")
-         child.stderr.on "data", (data) ->
-            console.log ("\t\t#{red}#{data}#{reset}").replace(/\n/g, "")
-
-   async.forEachSeries commands, run, (err) ->
-      unless silent
-         ms = (new Date() / 1) - startTime
-         console.log "#{white}Finished #{green}(#{ms} ms)#{reset}" 
-         done() if done
 
    

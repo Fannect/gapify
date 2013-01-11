@@ -6,12 +6,14 @@ exec = require('child_process').exec
 
 loader = require "../utils/loader"
 build_action = require "../actions/build"
+# watch_action = require "../actions/watch"
 
 currentDir = process.cwd()
 
 describe "gapify", () ->
 
    describe "loader", () ->
+
       it "should merge configs", () ->
          program =
             output: "../other"
@@ -54,7 +56,7 @@ describe "gapify", () ->
             output = path.join(process.cwd(), "./bin")
             build_action.compileViews 
                viewDir: path.join(process.cwd(), "./assets/views")
-               ignore: ["layout.jade"]
+               layouts: ["layout.jade"]
                output: output
             , done
          after () ->
@@ -173,7 +175,7 @@ describe "gapify", () ->
                done()
 
          it "should complete with --output option", (done) ->
-            exec "./gapify build -s -c ./test/assets -o ../otherbin", (err) ->
+            exec "./gapify build -s -r makeDir -c ./test/assets -o ../otherbin", (err) ->
                return done err if err
                checkAgainstFile "./test/otherbin/test.html", "./test/assets/test.html"
                checkAgainstFile "./test/otherbin/js/test.js", "./test/assets/test.js"
@@ -182,6 +184,20 @@ describe "gapify", () ->
                checkExistance "./test/otherbin/lalalalala"
                fs.removeSync "./test/otherbin"
                done()
+
+   # describe "watch action", () ->
+
+      # it "should watch files", (done) ->
+      #    exec "./gapify watch -c ./test/assets", (err) ->
+      #       return done err if err
+      #       done()
+
+      #    setTimeout () ->
+      #       filePath = path.join process.cwd(), "test/assets/views/sub/watch.text"
+      #       # filePath = process.cwd() "./test/assets"
+      #       fs.writeFileSync filePath, "test"
+      #    , 100
+
 
 checkExistance = (entity) ->
    fs.existsSync(entity).should.be.true

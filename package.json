@@ -29,7 +29,8 @@
       "underscore": "1.4.x",
       "fs-extra": "0.3.x",
       "snockets": "1.3.x",
-      "async": "0.1.x"
+      "async": "0.1.x",
+      "watch": "0.5.x"
    },
    "devDependencies": {
       "mocha": "1.7.x",

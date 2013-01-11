@@ -16,9 +16,9 @@
    ],
    "views": {
       "directory":"views",
-      "ignore":["layout.jade"]
+      "layouts":["layout.jade"]
    },
-   "default_command": "makeDir",
+   "default_command": null,
    "commands": {
       "makeDir": [
          {

@@ -13,7 +13,7 @@ program
    .option("-c, --chdir <path>", "change the working directory")
    .option("-w, --watch", "watchings the working directory for changes")
    .option("-e, --empty", "empties output directory (excluding .git and .gitignore)", false)
-   .option("-r, --run <command>", "runs command after successful build")
+   .option("-r, --run <command>", "runs command after successful run")
    .option("-d, --debug", "does not minify JS and CSS", false)
    .option("-s, --silent", "suppresses console.logs", false);
 

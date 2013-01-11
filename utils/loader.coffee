@@ -7,7 +7,7 @@ module.exports = (program) ->
 
    defaultOptions = require "../default.json"
    userOptions = require path.join process.cwd(), "gapify.json"
-   
+
    programOptions = 
       output: program.output or userOptions.output
       chdir: program.chdir
