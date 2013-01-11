@@ -34,24 +34,22 @@ Gapify relies on a configuration file, `gapify.json`, in the root directory. Her
       "ignore":["layout.jade"] // files that are layouts and should be ignored
    },
    "default_command": "GitCheckIn", // Command run by default on success
-   "commands": [ // this section allows for terminal commands to be executed on success compilation
-      {
-         "GitCheckIn": [
-            {
-               "command": "git add . -A", // commands are executed with output directory as the working directory
-               "on_error": "stop" // does NOT execute following commands on an error
-            },
-            {
-               "command": "git commit -m \"Auto update by Gapify.\"",
-               "on_error": "continue" // DOES execute following commands on an error
-            },
-            {
-               "command": "git push origin master",
-               "on_error": "stop"
-            }
-         ]
-      }
-   ]
+   "commands": { // this section allows for terminal commands to be executed on success compilation
+      "GitCheckIn": [
+         {
+            "command": "git add . -A", // commands are executed with output directory as the working directory
+            "on_error": "stop" // does NOT execute following commands on an error
+         },
+         {
+            "command": "git commit -m \"Auto update by Gapify.\"",
+            "on_error": "continue" // DOES execute following commands on an error
+         },
+         {
+            "command": "git push origin master",
+            "on_error": "stop"
+         }
+      ]
+   }
 }
 ```
 When using PhoneGap, file paths using the root (such as `/blah`) are not resolved correctly. To compensate, the folder structure of the views is flattened and all files in the view directory are renamed according to their previous folder structure.
