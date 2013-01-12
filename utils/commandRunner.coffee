@@ -11,17 +11,22 @@ class CommandRunner
 
    constructor: () ->
       @child_processes = []
+      @callbacks = []
 
    run: (commands, silent, done) ->
       @killCommands()
+      @callbacks.push done
 
       that = @
       unless commands and commands?.length > 0 then return
       startTime = new Date() / 1 unless silent
+      cwd = process.cwd()
 
       runCommand = (entry, next) ->
-         console.log "\t#{white}#{entry.command}#{reset}\n" unless silent 
+         process.chdir cwd
          
+         console.log "\t#{white}#{entry.command}#{reset}\n" unless silent 
+
          child = exec entry.command, (err, stdout, stderr) ->
             that.child_processes.splice index, 1
             unless silent
@@ -52,12 +57,22 @@ class CommandRunner
          unless silent
             ms = (new Date() / 1) - startTime
             console.log "#{white}Finished #{green}(#{ms} ms)#{reset}" 
-         done() if done
+         
+         that.callComplete()
+
+   onComplete: (done) ->
+      @callbacks.push done
+      return @
+
+   callComplete: () ->
+      if done then done() for done in @callbacks
+      @callbacks.length = 0
 
    killCommands: () ->
       for child in @child_processes
          child.kill()
       @child_processes.length = 0
+      @callbacks
 
 module.exports = CommandRunner
 

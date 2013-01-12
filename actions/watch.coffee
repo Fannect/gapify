@@ -2,7 +2,7 @@ fs = require "fs-extra"
 path = require "path"
 watcher = require "watch"
 build = require "./build"
-commandRunner = new (require "../utils/commandRunner")()
+CommandRunner = require "../utils/commandRunner"
 _ = require "underscore"
 
 # Colors for console.log
@@ -11,7 +11,11 @@ green = "\u001b[32m"
 white = "\u001b[37m"
 reset = "\u001b[0m"
 
-watch = module.exports = (config, done) ->
+commandRunner = null
+
+watch = module.exports = (config, runner, done) ->
+   commandRunner = if runner then runner else new CommandRunner()
+
    watcher.createMonitor process.cwd(), (monitor) ->
       monitor.on "created", watch.fileChanged
       monitor.on "changed", watch.fileChanged

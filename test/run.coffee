@@ -185,20 +185,6 @@ describe "gapify", () ->
                fs.removeSync "./test/otherbin"
                done()
 
-   # describe "watch action", () ->
-
-      # it "should watch files", (done) ->
-      #    exec "./gapify watch -c ./test/assets", (err) ->
-      #       return done err if err
-      #       done()
-
-      #    setTimeout () ->
-      #       filePath = path.join process.cwd(), "test/assets/views/sub/watch.text"
-      #       # filePath = process.cwd() "./test/assets"
-      #       fs.writeFileSync filePath, "test"
-      #    , 100
-
-
 checkExistance = (entity) ->
    fs.existsSync(entity).should.be.true
 

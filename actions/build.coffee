@@ -28,7 +28,7 @@ build = module.exports = (config, done) ->
             ms = (new Date() / 1) - config.start_time
             console.log "#{white}Finished #{green}(#{ms} ms)#{reset}" 
             
-         if command = config.run_command
+         if command = config.run_command 
             unless commandSequence = config.commands?[command]
                console.log "#{white}Invalid command: #{red}#{command}#{reset}" unless config.silent
                process.chdir config.starting_directory
@@ -36,9 +36,10 @@ build = module.exports = (config, done) ->
 
             console.log "#{white}Running commands: #{command}#{reset} #{green}(#{commandSequence.length})#{white}:#{reset}\n" unless config.silent
             process.chdir config.output
-            commandRunner.run commandSequence, config.silent, () ->
-               process.chdir config.starting_directory
-               done() if done
+            commandRunner.run commandSequence, config.silent
+               
+            process.chdir config.starting_directory
+            done null, commandRunner if done
          else
             process.chdir config.starting_directory
             done() if done

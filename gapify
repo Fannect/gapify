@@ -8,6 +8,8 @@ var load = require("./utils/loader");
 var build_action = require("./actions/build");
 var watch_action = require("./actions/watch");
 
+var CommandRunner = require("./utils/commandRunner");
+
 program
    .option("-o, --output <path>", "change the output directory, defaults to '/bin'")
    .option("-c, --chdir <path>", "change the working directory")
@@ -26,11 +28,12 @@ program
 
 program
    .command("watch")
-   .description("watch for file changes and compile files that change")
+   .description("builds and then watches for file changes rebuilds")
    .action(function (cmd) {
       config = load(program);
-      watch_action(config);
+      build_action(config, function (err, commandRunner) {
+         watch_action(config, commandRunner);
+      });
    });
-
 
 program.parse(process.argv);
