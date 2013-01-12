@@ -37,6 +37,6 @@
       "should": "1.2.x"
    },
    "scripts": {
-      "test": "mocha --compilers coffee:coffee-script --reporter spec"
+      "test": "mocha --compilers coffee:coffee-script --reporter spec -t 4000"
    }
 }
