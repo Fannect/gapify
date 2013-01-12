@@ -13,6 +13,9 @@ class CommandRunner
       @child_processes = []
       @callbacks = []
 
+      process.on "exit", () ->
+         @killCommands()
+
    run: (commands, silent, done) ->
       @killCommands()
       @callbacks.push done

@@ -16,6 +16,8 @@ commandRunner = null
 watch = module.exports = (config, runner, done) ->
    commandRunner = if runner then runner else new CommandRunner()
 
+   process.chdir config.cwd
+
    watcher.createMonitor process.cwd(), (monitor) ->
       monitor.on "created", watch.fileChanged
       monitor.on "changed", watch.fileChanged
@@ -43,7 +45,7 @@ watch.fileChanged = (file) ->
 
 watch.getAssociatedAsset = (file, config) ->
    # check assets
-   return null if fs.statSync(file).isDirectory()
+   return null if not fs.existsSync(file) or fs.statSync(file).isDirectory()
 
    for asset in config.assets
       assetPath = path.join process.cwd(), asset.from
@@ -61,6 +63,11 @@ watch.getAssociatedAsset = (file, config) ->
             from: file
             to: path.join asset.to, pathPart
          }
+
+      if asset.refresh_directory?
+         if file.indexOf(path.join config.cwd, asset.refresh_directory) == 0
+            return _.clone asset
+
 
    # check view directory
    viewPath = config.views.directory

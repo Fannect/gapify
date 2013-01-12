@@ -6,8 +6,8 @@
          "to":"{out}/js/test.js"
       },
       {
-         "from":"test.styl",
-         "to":"{out}/css/test.css"
+         "from": "test.styl",
+         "to": "{out}/css/test.css" 
       },
       {
          "from":"views/sub",
