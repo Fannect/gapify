@@ -19,9 +19,9 @@ module.exports = (program) ->
       start_time: new Date() / 1
 
    config = _.extend defaultOptions, userOptions, programOptions
-   config.output = path.join process.cwd(), config.output
+   config.output = path.resolve process.cwd(), config.output
 
    if config.views?.directory
-      config.views.directory = path.join process.cwd(), config.views.directory
+      config.views.directory = path.resolve process.cwd(), config.views.directory
 
    return config
