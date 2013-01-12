@@ -20,18 +20,17 @@ class CommandRunner
       @killCommands()
       @callbacks.push done
 
-      that = @
       unless commands and commands?.length > 0 then return
       startTime = new Date() / 1 unless silent
       cwd = process.cwd()
 
-      runCommand = (entry, next) ->
+      runCommand = (entry, next) =>
          process.chdir cwd
          
          console.log "\t#{white}#{entry.command}#{reset}\n" unless silent 
 
-         child = exec entry.command, (err, stdout, stderr) ->
-            that.child_processes.splice index, 1
+         child = exec entry.command, (err, stdout, stderr) =>
+            @.childCompleted(child)
             unless silent
                color = if err then red else green
                if not stderr and not stdout
@@ -47,8 +46,7 @@ class CommandRunner
                   return next err
             next()
 
-         index = that.child_processes.length
-         that.child_processes.push child
+         @.child_processes.push child
 
          unless silent
             child.stdout.on "data", (data) ->
@@ -56,16 +54,20 @@ class CommandRunner
             child.stderr.on "data", (data) ->
                console.log ("\t\t#{red}#{data}#{reset}").replace(/\n/g, "")
 
-      async.forEachSeries commands, runCommand, (err) ->
+      async.forEachSeries commands, runCommand, (err) =>
          unless silent
             ms = (new Date() / 1) - startTime
             console.log "#{white}Finished #{green}(#{ms} ms)#{reset}" 
          
-         that.callComplete()
+         @.callComplete()
 
    onComplete: (done) ->
       @callbacks.push done
       return @
+
+   childCompleted: (child) ->
+      for el, i in @child_processes
+         if el == child then @child_processes.splice i, 1           
 
    callComplete: () ->
       if done then done() for done in @callbacks
