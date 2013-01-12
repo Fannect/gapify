@@ -73,7 +73,7 @@ class CommandRunner
 
    killCommands: () ->
       for child in @child_processes
-         child.kill("SIGINT")
+         child.kill()
       @child_processes.length = 0
       @callbacks
 
