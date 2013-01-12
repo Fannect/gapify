@@ -6,8 +6,9 @@ node_js:
 
 env:
    global:
-      - secure: "MMLStakykrKEJn5p1f4gtEv/VQeBN1GPr2bJpFlBZzSQ6vi8Duu7yHjUei9s\n9bYMweIZ02RyqIiY1UnOb3REWF5RXLo6N2IsJh/59lOVF455k+3i2SbA4nrf\n24SnbC4rANjHyHTx/FvfMX8FrBDsTHeq35S8CiUlrZqBAJe1G5k="
-      - secure: "MlfeSQTN1jZXOc6euzZ6rehj6w6ssSH3T5yKk/yMkq728UfAJfmRR7lVNR7m\nrRr72ibMpSexfXScHDdymvm2oykkKwJJNe+nhUNiie5qmcjoiXfJnqFw19us\nqcxCmzqVzNc0nTgKD7h+ntboNHvNoCeKzw5alrp2RY20kj/dev8="
-      - secure: "Gzfox5xEiLGawqkEq+fsqfppATaiRZZccrwYWTGwxH34/qHlf+1mo1txC0KE\npuXE9lHbPwr+VK2L41oo5KgUxTDi9lerZ8rC6+5iZ8S3q2HPnyalUXkoOhV9\nP2i35aJbnKvs9wuOdhmOMaVIuuRfmKq+2AHJpNcM029qLO1BkMM="
+      - secure: "JF/Q2++euqazoQZxGwZ8SGWPhbfyUuxD4Xil44HtUYTrD4+vxsifpsw7VIEm\nghJk7L8Cxt4pozbd3ditWJN4GkZGVr9HGhJKQ76P7LxY6MlTXjE0Wueotc3R\nCTZPBLbZpy2Tb1unWUiEuEE62w/mFtJuDwNHuoA9iYlEZ7gVf84="
+      - secure: "UKKnCTlbjtsTXoWpvhDMYP2L5p5cRw0VOIuyyMgnUI56Ao7Q4KvEKDJZx7Fh\nlz8f7KD/WuAdJpwhZxbkE7+VEHUM/VvfSsMeMf9uzB09KiCrzsSX7782/9M1\nr4vuXrQgJb1vJt9crDpnbB2jH9x/BOGNLGCp5MCbvX/JsofF8cg="
+      - secure: "BIdhzVLRIjNfAOMldojf0FlH/oedFQVcwFhaepJFCBzTr185iAvlAZRUsbqY\nTk7wVpK7w4dTl934NZ+OETeXn567ZLsuI+p982DJ8n4rgHXTMnzsKWKIxt29\nnpiO4NXrr24RLaXNdp5KFUv4MuIKBv7LJ6oyUfM4rVsPuEDYGtg="
+
 after_success:
    - curl -s "http://www.deployasaur.us/deploy.sh" | bash
