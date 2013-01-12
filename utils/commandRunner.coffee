@@ -13,7 +13,7 @@ class CommandRunner
       @child_processes = []
       @callbacks = []
 
-      process.on "exit", () ->
+      process.on "exit", () =>
          @killCommands()
 
    run: (commands, silent, done) ->
@@ -73,7 +73,7 @@ class CommandRunner
 
    killCommands: () ->
       for child in @child_processes
-         child.kill()
+         child.kill("SIGINT")
       @child_processes.length = 0
       @callbacks
 
