@@ -10,14 +10,14 @@ reset = "\u001b[0m"
 class CommandRunner
 
    constructor: () ->
-      @child_processes = []
+      @running_command = null
       @callbacks = []
 
       process.on "exit", () =>
-         @killCommands()
+         @killRunningCommand()
 
    run: (commands, silent, done) ->
-      @killCommands()
+      @killRunningCommand()
       @callbacks.push done
 
       unless commands and commands?.length > 0 then return
@@ -28,9 +28,8 @@ class CommandRunner
          process.chdir cwd
          
          console.log "\t#{white}#{entry.command}#{reset}\n" unless silent 
+         @running_command = exec entry.command, (err, stdout, stderr) =>
 
-         child = exec entry.command, (err, stdout, stderr) =>
-            @.childCompleted(child)
             unless silent
                color = if err then red else green
                if not stderr and not stdout
@@ -46,12 +45,10 @@ class CommandRunner
                   return next err
             next()
 
-         @.child_processes.push child
-
          unless silent
-            child.stdout.on "data", (data) ->
+            @running_command.stdout.on "data", (data) ->
                console.log ("\t\t#{green}#{data}#{reset}").replace(/\n/g, "")
-            child.stderr.on "data", (data) ->
+            @running_command.stderr.on "data", (data) ->
                console.log ("\t\t#{red}#{data}#{reset}").replace(/\n/g, "")
 
       async.forEachSeries commands, runCommand, (err) =>
@@ -65,19 +62,15 @@ class CommandRunner
       @callbacks.push done
       return @
 
-   childCompleted: (child) ->
-      for el, i in @child_processes
-         if el == child then @child_processes.splice i, 1           
-
    callComplete: () ->
       if done then done() for done in @callbacks
       @callbacks.length = 0
 
-   killCommands: () ->
-      for child in @child_processes
-         child.kill()
-      @child_processes.length = 0
-      @callbacks
+   killRunningCommand: () ->
+      if @running_command
+         @running_command.kill("SIGINT")
+         console.log "Is kill:", @running_command.killed
+         running_command = null
 
 module.exports = CommandRunner
 

@@ -168,9 +168,9 @@ build.compileAsset =
    ###
    coffee: (asset, options, done) ->
       debug = options?.debug or false
-      snockets.getConcatenation asset.from, minify: not debug, (err, js) ->
-         throw err if err
-         fs.writeFile asset.to, js, done 
+      # Use sync method to get around reordering of files
+      js = snockets.getConcatenation asset.from, {minify: not debug,async: false}, (err, js) ->
+      fs.writeFile asset.to, js, done 
 
    ###
    options =
