@@ -4,6 +4,8 @@
 
 It turned out to be a fairly flexible tool that can be used by anyone who wants to move files around and compile CoffeeScript, Jade, or Stylus files. More files types should be supported soon.
 
+_Note_: This was quickly thrown together and isn't what I would consider stable. Just keep this in mind.
+
 ## Configuration
 
 Gapify relies on a configuration file, `gapify.json`, in the root directory. Here is a sample configuration.
