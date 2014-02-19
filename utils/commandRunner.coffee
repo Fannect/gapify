@@ -69,8 +69,7 @@ class CommandRunner
    killRunningCommand: () ->
       if @running_command
          @running_command.kill("SIGINT")
-         console.log "Is kill:", @running_command.killed
-         running_command = null
+         @running_command = null
 
 module.exports = CommandRunner
 
